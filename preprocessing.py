@@ -8,6 +8,8 @@ WINDOW_SIZE_MS = 25
 HOP_SIZE_MS = 10
 N_MELS = 80 # Number of filter banks
 
+AUDIO_FILE_FORMAT = ".m4a"
+
 # Convert time-based parameters (ms) to sample-based parameters for librosa
 n_fft = int(WINDOW_SIZE_MS * SAMPLE_RATE_HZ / 1000)
 hop_length = int(HOP_SIZE_MS * SAMPLE_RATE_HZ / 1000)
@@ -32,33 +34,31 @@ def load_and_split_dataset(data_path):
         "evaluation": {}  # {speaker_id: {word: spectrogram}}
     }
 
-    # Define which speaker IDs belong to which group based on the recordings
-    rep_speaker = "spk1"
-    train_speakers = ["spk2", "spk3", "spk4", "spk5"]  # 2 males, 2 females
-    eval_speakers = ["spk6", "spk7", "spk8", "spk9"]  # 2 males, 2 females
-
+    # Iterate through the data folder
     for filename in os.listdir(data_path):
-        if filename.endswith(".wav"):
-            # Example filename format: "spk1_m_digit0.wav"
-            parts = filename.replace(".wav", "").split("_")
-            spk_id = parts[0]
-            word = parts[2]
+        if filename.endswith(AUDIO_FILE_FORMAT):
+            # Parsing format: [Group]_[SpeakerID]_[Gender]_[Word].m4a
+            # Example: rep_spk1_f_0.m4a -> ['rep', 'spk1', 'f', '0']
+            parts = filename.replace(".m4a", "").split("_")
+
+            # Ensure the filename has all 4 required parts to avoid errors
+            if len(parts) < 4:
+                print(f"Skipping malformed filename: {filename}")
+                continue
+
+            group, spk_id, gender, word = parts
 
             file_path = os.path.join(data_path, filename)
-            spec = extract_features(file_path)  # Using the function we wrote before
 
-            # 1. Class Representative [cite: 14, 28]
-            if spk_id == rep_speaker:
+            spec = extract_features(file_path)
+
+            if group == "rep":
                 dataset["representative"][word] = spec
-
-            # 2. Training Set (4 speakers)
-            elif spk_id in train_speakers:
+            elif group == "train":
                 if spk_id not in dataset["train"]:
                     dataset["train"][spk_id] = {}
                 dataset["train"][spk_id][word] = spec
-
-            # 3. Evaluation Set (4 speakers)
-            elif spk_id in eval_speakers:
+            elif group == "eval":
                 if spk_id not in dataset["evaluation"]:
                     dataset["evaluation"][spk_id] = {}
                 dataset["evaluation"][spk_id][word] = spec
