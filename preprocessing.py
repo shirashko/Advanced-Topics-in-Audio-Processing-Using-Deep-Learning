@@ -67,3 +67,19 @@ def load_and_split_dataset(data_path):
                 dataset["evaluation"][spk_id][word] = spec
 
     return dataset
+
+def plot_spectrogram_comparison(spec1, title1, spec2, title2):
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot(2, 1, 1)
+    librosa.display.specshow(spec1, x_axis='time', y_axis='mel', sr=16000, hop_length=160)
+    plt.colorbar(format='%+2.0f dB')
+    plt.title(title1)
+
+    plt.subplot(2, 1, 2)
+    librosa.display.specshow(spec2, x_axis='time', y_axis='mel', sr=16000, hop_length=160)
+    plt.colorbar(format='%+2.0f dB')
+    plt.title(title2)
+
+    plt.tight_layout()
+    plt.show()
