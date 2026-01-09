@@ -6,23 +6,18 @@
 
 ## Project Overview
 
-This project implements a basic ASR pipeline, including data acquisition, feature extraction using Mel Spectrograms, and sequence alignment/classification using **Dynamic Time Warping (DTW)** and **Connectionist Temporal Classification (CTC)**.
+This project implements a basic ASR pipeline, including data loading, feature extraction using Mel Spectrograms, and sequence alignment/classification using **Dynamic Time Warping (DTW)** and **Connectionist Temporal Classification (CTC)**.
 
 ## 1. Dataset & Preprocessing
 
-**Data Collection:** Recorded 9 individuals (4 females, 5 males) pronouncing digits 0-9 and a random word ("banana").
-
-
-**Segmentation:** Manually segmented into 11 audio files per speaker (Total: 99 files).
+**Data Collection:** Recorded 9 individuals (4 females, 5 males) pronouncing digits 0-9 and a random word ("banana"). Overall collected 11 audio files per speaker (Total: 99 files).
 
 **Resampling:** All audio files are resampled to a consistent frequency of 16 kHz.
 
-**Data Split:**
-**Class Representative:** 1 speaker.
-
-**Training Set:** 2 males, 2 females.
-
-**Evaluation Set:** 2 males, 2 females.
+**Data Split:** 
+- **Class Representative:** 1 speaker (used as the reference to align with)
+- **Training Set:** 2 males, 2 females.
+- **Evaluation Set:** 2 males, 2 females.
 
 
 ## 2. Feature Extraction
@@ -36,6 +31,7 @@ For each audio file, we compute a Mel Spectrogram with the following parameters:
 **Thresholding:** A similarity threshold is implemented to ensure the random word ("banana") is correctly labeled as a non-digit.
 **Optimization:** Applied normalization (AGC) and length-based distance normalization.
 
+![](assets/dtw_visual.png)
 
 ## 4. CTC Algorithm (Forward & Force Alignment)
 * Implementation of the CTC collapse function .
