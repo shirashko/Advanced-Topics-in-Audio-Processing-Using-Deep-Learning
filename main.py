@@ -4,7 +4,7 @@ from typing import Dict
 from preprocessing import load_and_split_dataset
 from dtw_classification import build_distance_matrix
 from utils import DB_WORDS, find_optimal_threshold, classify_recordings, calculate_accuracy, get_labels_and_data, \
-    analyze_samples
+    analyze_samples, plot_confusion_matrix
 
 CONFIG = {
     "DATA_DIR": "data",
@@ -66,6 +66,8 @@ def run_asr_pipeline(mode: str = CONFIG["MODE"]):
 
     for i in range(min(11, len(predictions))):
         print(f"Sample {i} | Target: {actual_labels[i]:<10} | Pred: {predictions[i]}")
+
+    plot_confusion_matrix(actual_labels, predictions)
 
 
 if __name__ == "__main__":

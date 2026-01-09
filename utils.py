@@ -1,5 +1,6 @@
 from typing import Dict, List
-
+import librosa.display
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import numpy as np
 import librosa
 from matplotlib import pyplot as plt
@@ -43,7 +44,7 @@ def classify_recordings(dist_matrix, threshold=0.5):  # Added threshold param
         min_dist = row[min_idx]
 
         if min_dist > threshold:
-            predicted_labels.append('banana / non digit')  # Or "non-digit"
+            predicted_labels.append('banana / non digit')
         else:
             predicted_labels.append(DB_WORDS[min_idx])
 
@@ -118,4 +119,16 @@ def analyze_samples(dataset):
                 spec_spk2_5, f"Speaker {spk_id_2}: Digit 5",
                 fig_num=2
             )
+    plt.show()
+
+def plot_confusion_matrix(actual_labels, predicted_labels):
+    """
+    Computes and plots a confusion matrix to evaluate classification
+    accuracy over the validation set.
+    """
+    cm = confusion_matrix(actual_labels, predicted_labels, labels=DB_WORDS)
+    fig, ax = plt.subplots(figsize=(10, 10))
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=DB_WORDS)
+    disp.plot(cmap='Blues', ax=ax, xticks_rotation='vertical')
+    plt.title("Confusion Matrix - Validation Set Analysis")
     plt.show()
