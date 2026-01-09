@@ -56,13 +56,12 @@ def compute_dtw_distance(spec1, spec2, normalize=True):
     return total_cost / (num_frames_ref + num_frames_test) if normalize else total_cost
 
 
-def build_distance_matrix(test_data, db_data):
+def build_distance_matrix(test_data, db_data, db_keys):
     """
     Constructs the 40x11 distance matrix required for the project (Section 3.d).
     Compares every recording in the test set against the reference DB.
     """
     speakers = list(test_data.keys())
-    db_keys = list(db_data.keys())  # Expected: 0-9 + banana
 
     # Calculate total number of test files across all speakers
     num_test_files = sum(len(test_data[spk]) for spk in speakers)

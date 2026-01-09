@@ -51,7 +51,7 @@ def main():
     train_count = len(dataset['train'])
 
     # Get the reference word list from DB (with consistent order)
-    db_keys = list(dataset['representative'].keys())
+    db_keys = [str(i) for i in range(10)] + ['banana']
 
     print(f"\nDataset Summary:")
     print(f" - Representative words (DB): {rep_count}")
@@ -70,7 +70,7 @@ def main():
         print("\n--- Starting DTW Distance Calculation ---")
 
         # Build the 40x11 distance matrix
-        dist_matrix = build_distance_matrix(dataset['train'], dataset['representative'])
+        dist_matrix = build_distance_matrix(dataset['train'], dataset['representative'], db_keys)
 
         print(f"Distance Matrix (Shape: {dist_matrix.shape}) created.")
 
@@ -90,7 +90,7 @@ def main():
         print(f"Accuracy over Training Set: {accuracy:.2f}%")
 
         # Example print of first 5 predictions
-        for i in range(min(5, len(predictions))):
+        for i in range(min(11, len(predictions))):
             print(f"File {i}: Predicted='{predictions[i]}', Actual='{actual_labels[i]}'")
     else:
         print("\n No training speakers found. Please add 'train_' files to your data folder.")
