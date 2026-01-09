@@ -23,6 +23,9 @@ def extract_features(file_path, normalize=True):
     """Calculates Mel Spectrogram for one file."""
     audio_signal, sampling_rate_hz = librosa.load(file_path, sr=SAMPLE_RATE_HZ)
 
+    if np.max(np.abs(audio_signal)) != 0:
+        audio_signal = audio_signal / np.max(np.abs(audio_signal))
+
     mel_spec = feature.melspectrogram(
         y=audio_signal,
         sr=sampling_rate_hz,
@@ -32,7 +35,6 @@ def extract_features(file_path, normalize=True):
     )
 
     log_mel = librosa.power_to_db(mel_spec, ref=np.max)
-    # Normalize features
     normalized_mel = (log_mel - np.mean(log_mel)) / (np.std(log_mel) + 1e-6)
     return normalized_mel if normalize else log_mel
 
