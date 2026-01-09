@@ -19,16 +19,22 @@ N_FFT = int(WINDOW_SIZE_MS * SAMPLE_RATE_HZ / 1000)
 # The number of samples between successive frames
 HOP_LENGTH = int(HOP_SIZE_MS * SAMPLE_RATE_HZ / 1000)
 
-def extract_features(file_path):
+def extract_features(file_path, normalize=True):
     """Calculates Mel Spectrogram for one file."""
     audio_signal, sampling_rate_hz = librosa.load(file_path, sr=SAMPLE_RATE_HZ)
+
     mel_spec = feature.melspectrogram(
-        y=audio_signal, sr=sampling_rate_hz, n_fft=N_FFT,
+        y=audio_signal,
+        sr=sampling_rate_hz,
+        n_fft=N_FFT,
         hop_length=HOP_LENGTH,
         n_mels=NUM_MEL_BINS
     )
-    # Return log-scaled spectrogram for DTW analysis
-    return librosa.power_to_db(mel_spec, ref=np.max)
+
+    log_mel = librosa.power_to_db(mel_spec, ref=np.max)
+    # Normalize features
+    normalized_mel = (log_mel - np.mean(log_mel)) / (np.std(log_mel) + 1e-6)
+    return normalized_mel if normalize else log_mel
 
 
 def load_and_split_dataset(data_path):
