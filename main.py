@@ -5,6 +5,16 @@ from dtw_classification import build_distance_matrix
 from preprocessing import plot_spectrogram_comparison
 
 
+def find_optimal_threshold(dist_matrix, actual_labels, db_keys):
+    correct_match_distances = []
+    for i, label in enumerate(actual_labels):
+        if label in db_keys:
+            db_idx = db_keys.index(label)
+            correct_match_distances.append(dist_matrix[i, db_idx])
+
+    return np.mean(correct_match_distances) + 2 * np.std(correct_match_distances)
+
+
 def sanity_check(dataset):
     print("\nDisplaying Spectrogram comparison...")
     spec_zero = dataset['representative'].get('0')
@@ -19,14 +29,22 @@ def sanity_check(dataset):
         print("Could not find '0' or 'banana' in the representative dataset.")
 
 
-def classify_recordings(dist_matrix, db_keys):
+def classify_recordings(dist_matrix, db_keys, threshold=0.5):  # Added threshold param
     """
     Determines the closest word for each recording based on the minimum cost (Section 3.e).
+    If the cost is too high, it is labeled as a non-digit/random word.
     """
-    # Find the index of the minimum value in each row
-    predictions = np.argmin(dist_matrix, axis=1)
-    # Map indices back to word labels (e.g., index 0 -> "0", index 10 -> "banana")
-    predicted_labels = [db_keys[i] for i in predictions]
+    predicted_labels = []
+
+    for row in dist_matrix:
+        min_idx = np.argmin(row)
+        min_dist = row[min_idx]
+
+        if min_dist > threshold:
+            predicted_labels.append('banana / non digit')  # Or "non-digit"
+        else:
+            predicted_labels.append(db_keys[min_idx])
+
     return predicted_labels
 
 
@@ -36,6 +54,7 @@ def calculate_accuracy(predictions, actual_labels):
     """
     correct = sum(1 for p, a in zip(predictions, actual_labels) if p == a)
     return (correct / len(actual_labels)) * 100 if actual_labels else 0
+
 
 
 def main():
@@ -72,17 +91,18 @@ def main():
         # Build the 40x11 distance matrix
         dist_matrix = build_distance_matrix(dataset['train'], dataset['representative'], db_keys)
 
-        print(f"Distance Matrix (Shape: {dist_matrix.shape}) created.")
-
-        # Determine classification
-        predictions = classify_recordings(dist_matrix, db_keys)
-
-        # For accuracy, we extract the true labels from the training dataset
-        # This assumes words are processed in the same order as in build_distance_matrix
+        # Identify the actual labels of training set
         actual_labels = []
         for spk in dataset['train']:
             for word in sorted(dataset['train'][spk].keys()):
                 actual_labels.append(word)
+
+        # Calculate the statistical threshold based on these training labels
+        optimal_threshold = find_optimal_threshold(dist_matrix, actual_labels, db_keys)
+        print(f"Statistically determined threshold: {optimal_threshold:.4f}")
+
+        # Classify using the threshold
+        predictions = classify_recordings(dist_matrix, db_keys, optimal_threshold)
 
         accuracy = calculate_accuracy(predictions, actual_labels)
 
