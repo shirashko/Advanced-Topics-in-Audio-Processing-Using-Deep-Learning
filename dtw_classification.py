@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def compute_dtw_distance(spec1, spec2, normalize=True):
+def compute_dtw_distance(spectrogram1, spectrogram2, normalize=True):
     """
         Computes the Dynamic Time Warping (DTW) distance between two Mel Spectrograms.
 
@@ -14,8 +14,8 @@ def compute_dtw_distance(spec1, spec2, normalize=True):
         D(i, j) = d(i, j) + min(D[i-1, j], D[i, j-1], D[i-1, j-1])
 
         Args:
-            spec_ref (np.ndarray): The reference spectrogram from the DB.
-            spec_test (np.ndarray): The test spectrogram to be classified.
+            spectrogram1 (np.ndarray): The reference spectrogram from the DB.
+            spectrogram2 (np.ndarray): The test spectrogram to be classified.
             normalize (bool): If True, divides the final cost by (N + M) to account for
                               different audio lengths (Section 3.g.ii).
 
@@ -23,26 +23,26 @@ def compute_dtw_distance(spec1, spec2, normalize=True):
             float: The calculated DTW distance (cost) between the two signals.
         """
     # the number of frames (time columns) in each recording
-    num_frames_ref, num_frames_test = spec1.shape[1], spec2.shape[1]
+    num_frames_ref, num_frames_test = spectrogram1.shape[1], spectrogram2.shape[1]
 
     # Initialize the Cumulative Cost Matrix with infinity
     cost_matrix = np.full((num_frames_ref, num_frames_test), np.inf)
 
     # Boundary Condition: Calculate local distance for the first cell (0,0)
-    cost_matrix[0, 0] = np.linalg.norm(spec1[:, 0] - spec2[:, 0])
+    cost_matrix[0, 0] = np.linalg.norm(spectrogram1[:, 0] - spectrogram2[:, 0])
 
     # Fill the first row (only horizontal movement possible)
     for i in range(1, num_frames_ref):
-        cost_matrix[i, 0] = cost_matrix[i - 1, 0] + np.linalg.norm(spec1[:, i] - spec2[:, 0])
+        cost_matrix[i, 0] = cost_matrix[i - 1, 0] + np.linalg.norm(spectrogram1[:, i] - spectrogram2[:, 0])
 
     # Fill the first column (only vertical movement possible)
     for j in range(1, num_frames_test):
-        cost_matrix[0, j] = cost_matrix[0, j - 1] + np.linalg.norm(spec1[:, 0] - spec2[:, j])
+        cost_matrix[0, j] = cost_matrix[0, j - 1] + np.linalg.norm(spectrogram1[:, 0] - spectrogram2[:, j])
 
     # Fill the rest with the matrix using the recursive formula
     for i in range(1, num_frames_ref):
         for j in range(1, num_frames_test):
-            local_dist = np.linalg.norm(spec1[:, i] - spec2[:, j])
+            local_dist = np.linalg.norm(spectrogram1[:, i] - spectrogram2[:, j])
 
             # Add local distance to the minimum cost of reaching this cell from neighbors
             cost_matrix[i, j] = local_dist + min(cost_matrix[i - 1, j],  # Insertion
