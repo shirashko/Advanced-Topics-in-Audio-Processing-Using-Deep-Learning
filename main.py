@@ -2,6 +2,7 @@ import os
 import numpy as np
 from preprocessing import load_and_split_dataset
 from dtw_classification import build_distance_matrix
+from preprocessing import plot_spectrogram_comparison
 
 
 def sanity_check(dataset):
@@ -10,7 +11,6 @@ def sanity_check(dataset):
     spec_banana = dataset['representative'].get('banana')
 
     if spec_zero is not None and spec_banana is not None:
-        from preprocessing import plot_spectrogram_comparison
         plot_spectrogram_comparison(
             spec_zero, "Representative: Digit 0",
             spec_banana, "Representative: Word 'Banana'"
@@ -63,7 +63,7 @@ def main():
         print(f"Warning: Representative set has {rep_count}/11 files.")
 
     # 2. Sanity Check Visualization
-    sanity_check(dataset)
+    # sanity_check(dataset)
 
     # 3. DTW Classification (Section 3.c, 3.d, 3.e)
     if train_count > 0:

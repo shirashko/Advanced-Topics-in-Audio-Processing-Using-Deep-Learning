@@ -14,15 +14,17 @@ NUM_MEL_BINS = 80 # Number of filter banks
 AUDIO_FILE_FORMAT = ".wav"
 
 # Convert time-based parameters (ms) to sample-based parameters for librosa
-n_fft = int(WINDOW_SIZE_MS * SAMPLE_RATE_HZ / 1000)
-hop_length = int(HOP_SIZE_MS * SAMPLE_RATE_HZ / 1000)
+# The number of samples in each analysis window
+N_FFT = int(WINDOW_SIZE_MS * SAMPLE_RATE_HZ / 1000)
+# The number of samples between successive frames
+HOP_LENGTH = int(HOP_SIZE_MS * SAMPLE_RATE_HZ / 1000)
 
 def extract_features(file_path):
     """Calculates Mel Spectrogram for one file."""
-    y, sr = librosa.load(file_path, sr=SAMPLE_RATE_HZ)
+    audio_signal, sampling_rate_hz = librosa.load(file_path, sr=SAMPLE_RATE_HZ)
     mel_spec = feature.melspectrogram(
-        y=y, sr=sr, n_fft=n_fft,
-        hop_length=hop_length,
+        y=audio_signal, sr=sampling_rate_hz, n_fft=N_FFT,
+        hop_length=HOP_LENGTH,
         n_mels=NUM_MEL_BINS
     )
     # Return log-scaled spectrogram for DTW analysis
@@ -47,24 +49,23 @@ def load_and_split_dataset(data_path):
             if len(parts) < 4:
                 print(f"Skipping malformed filename: {filename}")
                 continue
-
-            # later we can add gender to what we return to utilize it for analysis
             group, spk_id, gender, word = parts
 
-            file_path = os.path.join(data_path, filename)
+            # later we can add gender to what we return to utilize it for analysis
 
-            spec = extract_features(file_path)
+            file_path = os.path.join(data_path, filename)
+            spectrogram = extract_features(file_path)
 
             if group == "rep":
-                dataset["representative"][word] = spec
+                dataset["representative"][word] = spectrogram
             elif group == "train":
                 if spk_id not in dataset["train"]:
                     dataset["train"][spk_id] = {}
-                dataset["train"][spk_id][word] = spec
+                dataset["train"][spk_id][word] = spectrogram
             elif group == "eval":
                 if spk_id not in dataset["evaluation"]:
                     dataset["evaluation"][spk_id] = {}
-                dataset["evaluation"][spk_id][word] = spec
+                dataset["evaluation"][spk_id][word] = spectrogram
 
     return dataset
 
