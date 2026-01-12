@@ -48,7 +48,8 @@ def run_asr_pipeline(mode: str = CONFIG["MODE"]):
     dataset = load_and_split_dataset(data_path)
 
     if not validate_dataset(dataset):
-        logging.warn("Dataset validation failed. Check your data directory.")
+        logging.error("Dataset validation failed. Check your data directory.")
+        raise (ValueError("Dataset validation failed. Check your data directory."))
 
     analyze_samples(dataset)
 

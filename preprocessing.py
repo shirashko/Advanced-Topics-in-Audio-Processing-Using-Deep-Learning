@@ -45,7 +45,6 @@ def load_and_split_dataset(data_path):
         "evaluation": {}  # {speaker_id: {word: spectrogram}}
     }
 
-
     # Iterate through the data folder
     for filename in os.listdir(data_path):
         if filename.endswith(AUDIO_FILE_FORMAT):

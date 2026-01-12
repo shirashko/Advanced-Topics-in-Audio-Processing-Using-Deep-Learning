@@ -124,11 +124,18 @@ def analyze_samples(dataset):
 def plot_confusion_matrix(actual_labels, predicted_labels):
     """
     Computes and plots a confusion matrix to evaluate classification
-    accuracy over the validation set.
+    accuracy (over the train/validation set).
     """
     cm = confusion_matrix(actual_labels, predicted_labels, labels=DB_WORDS)
-    fig, ax = plt.subplots(figsize=(10, 10))
+    fig, ax = plt.subplots(figsize=(12, 10))
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=DB_WORDS)
-    disp.plot(cmap='Blues', ax=ax, xticks_rotation='vertical')
-    plt.title("Confusion Matrix - Validation Set Analysis")
+    disp.plot(cmap='Blues', ax=ax, xticks_rotation='vertical', values_format='d')
+    cbar = ax.images[-1].colorbar
+    max_val = cm.max()
+    ticks = np.arange(0, max_val + 1, 1)
+    cbar.set_ticks(ticks)
+    cbar.set_ticklabels(ticks)
+    cbar.set_label('Number of Audio Samples', rotation=270, labelpad=15, fontsize=12)
+    plt.title("Confusion Matrix - Analysis", fontsize=14)
+    plt.tight_layout()
     plt.show()
