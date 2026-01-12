@@ -45,6 +45,7 @@ def load_and_split_dataset(data_path):
         "evaluation": {}  # {speaker_id: {word: spectrogram}}
     }
 
+
     # Iterate through the data folder
     for filename in os.listdir(data_path):
         if filename.endswith(AUDIO_FILE_FORMAT):
@@ -54,24 +55,19 @@ def load_and_split_dataset(data_path):
 
             # Ensure the filename has all 4 required parts to avoid errors
             if len(parts) < 4:
-                print(f"Skipping malformed filename: {filename}")
-                continue
+                raise ValueError(f"Filename {filename} does not conform to expected format.")
             group, spk_id, gender, word = parts
-
-            # later we can add gender to what we return to utilize it for analysis
 
             file_path = os.path.join(data_path, filename)
             spectrogram = extract_features(file_path)
 
+            group_to_key = {"train": "train", "eval": "evaluation"}
             if group == "rep":
                 dataset["representative"][word] = spectrogram
-            elif group == "train":
-                if spk_id not in dataset["train"]:
-                    dataset["train"][spk_id] = {}
-                dataset["train"][spk_id][word] = spectrogram
-            elif group == "eval":
-                if spk_id not in dataset["evaluation"]:
-                    dataset["evaluation"][spk_id] = {}
-                dataset["evaluation"][spk_id][word] = spectrogram
+            elif group in group_to_key:
+                target_key = group_to_key[group]
+                if spk_id not in dataset[target_key]:
+                    dataset[target_key][spk_id] = {}
+                dataset[target_key][spk_id][word] = spectrogram
 
     return dataset
