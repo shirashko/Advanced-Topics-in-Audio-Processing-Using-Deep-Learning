@@ -42,7 +42,6 @@ def validate_dataset(dataset: Dict) -> bool:
 
 
 def run_asr_pipeline(mode: str = CONFIG["MODE"]):
-    """Executes the DTW-based ASR classification pipeline."""
     data_path = os.path.join(os.getcwd(), CONFIG["DATA_DIR"])
 
     logging.info(f"Loading data from: {data_path}")
