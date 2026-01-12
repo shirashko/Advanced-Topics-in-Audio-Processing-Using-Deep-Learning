@@ -32,6 +32,11 @@ def validate_dataset(dataset: Dict) -> bool:
         if spk_count != CONFIG["EXPECTED_SPEAKERS"]:
             logging.warning(f"{group.capitalize()} speaker mismatch: {spk_count}/{CONFIG['EXPECTED_SPEAKERS']}")
             return False
+        for speaker in dataset.get(group, {}):
+            file_count = len(dataset[group][speaker])
+            if file_count != CONFIG["EXPECTED_FILES"]:
+                logging.warning(f"{group.capitalize()} {speaker} file mismatch: {file_count}/{CONFIG['EXPECTED_FILES']}")
+                return False
 
     return True
 
