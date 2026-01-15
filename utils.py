@@ -44,7 +44,7 @@ def classify_recordings(dist_matrix, threshold=0.5):  # Added threshold param
         min_dist = row[min_idx]
 
         if min_dist > threshold:
-            predicted_labels.append('banana / non digit')
+            predicted_labels.append('banana')  # Non-digit classified as banana
         else:
             predicted_labels.append(DB_WORDS[min_idx])
 
@@ -138,4 +138,62 @@ def plot_confusion_matrix(actual_labels, predicted_labels):
     cbar.set_label('Number of Audio Samples', rotation=270, labelpad=15, fontsize=12)
     plt.title("Confusion Matrix - Analysis", fontsize=14)
     plt.tight_layout()
+    plt.show()
+
+
+def plot_distance_matrix_heatmap(dist_matrix, dataset, mode, db_words=DB_WORDS, save_path=None):
+    """
+    Plots the DTW distance matrix as a heatmap (Section 3.d visualization).
+    
+    The matrix shows distances between each test recording (rows) and 
+    each reference recording in the DB (columns).
+    
+    Args:
+        dist_matrix: 2D numpy array of shape (num_test_files, num_db_files)
+        dataset: The dataset dictionary containing speaker/word info
+        mode: 'train' or 'evaluation'
+        db_words: List of words in the reference DB
+        save_path: Optional path to save the figure
+    """
+    # Build row labels (speaker_word format)
+    row_labels = []
+    mode_data = dataset.get(mode, {})
+    for spk in sorted(mode_data.keys()):
+        for word in sorted(mode_data[spk].keys()):
+            row_labels.append(f"{spk}_{word}")
+    
+    fig, ax = plt.subplots(figsize=(14, 12))
+    
+    # Create heatmap
+    im = ax.imshow(dist_matrix, cmap='viridis', aspect='auto')
+    
+    # Add colorbar
+    cbar = plt.colorbar(im, ax=ax)
+    cbar.set_label('DTW Distance (normalized)', rotation=270, labelpad=20, fontsize=12)
+    
+    # Set ticks and labels
+    ax.set_xticks(np.arange(len(db_words)))
+    ax.set_xticklabels(db_words, fontsize=10)
+    ax.set_yticks(np.arange(len(row_labels)))
+    ax.set_yticklabels(row_labels, fontsize=8)
+    
+    # Rotate x-axis labels for better readability
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', rotation_mode='anchor')
+    
+    # Labels and title
+    ax.set_xlabel('Reference DB Words', fontsize=12)
+    ax.set_ylabel('Test Recordings (Speaker_Word)', fontsize=12)
+    ax.set_title(f'DTW Distance Matrix Heatmap ({mode.capitalize()} Set vs Reference DB)', fontsize=14)
+    
+    # Add grid lines to separate speakers (every 11 rows for 11 words per speaker)
+    num_words_per_speaker = len(db_words)
+    for i in range(1, len(row_labels) // num_words_per_speaker):
+        ax.axhline(y=i * num_words_per_speaker - 0.5, color='white', linewidth=2)
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"Distance matrix heatmap saved to: {save_path}")
+    
     plt.show()

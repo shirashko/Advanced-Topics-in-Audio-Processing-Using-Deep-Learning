@@ -7,7 +7,7 @@ from dtw_classification import build_distance_matrix
 from ctc import ctc_forward_logprob, ctc_force_align
 from ctc_tasks import main as run_ctc_tasks
 from utils import DB_WORDS, find_optimal_threshold, classify_recordings, calculate_accuracy, get_labels_and_data, \
-    analyze_samples, plot_confusion_matrix
+    analyze_samples, plot_confusion_matrix, plot_distance_matrix_heatmap
 
 CONFIG = {
     "DATA_DIR": "data",
@@ -60,6 +60,9 @@ def run_asr_pipeline(mode: str = CONFIG["MODE"]):
 
     logging.info(f"Calculating DTW Distance Matrix (Mode: {mode})...")
     dist_matrix = build_distance_matrix(dataset[mode], dataset['representative'], DB_WORDS)
+
+    # Visualize the distance matrix as a heatmap (Section 3.d)
+    plot_distance_matrix_heatmap(dist_matrix, dataset, mode, save_path=f"assets/dtw_distance_matrix_{mode}.png")
 
     actual_labels = get_labels_and_data(dataset, mode)
 
