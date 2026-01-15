@@ -43,6 +43,22 @@ For each audio file, we compute a Mel Spectrogram with the following parameters:
 
 **How to run the CTC demo:** Set `RUN_CTC` to `True` in `main.py`. The demo uses a small synthetic log-probability matrix (no model required) and prints the CTC log-probability, the collapsed best path, and alignment segments.
 
+**CTC Tasks (Parts 4–7):** Run `python ctc_tasks.py` after placing `force_align.pkl` in the repo root. This script computes the `P(aba)` forward probability for the provided `pred` matrix, runs forced alignment (max instead of sum), and saves all required plots to `assets/`:
+- `ctc_pred_matrix.png`
+- `ctc_aba_alignment.png`
+- `ctc_aba_backtrace.png`
+- `ctc_force_align_overlay.png`
+- `ctc_force_align_backtrace.png`
+
+**How the assignment items map to the code:**
+- **CTC collapse (B)** → `ctc.py` → `ctc_collapse()`
+- **Forward pass (α)** → `ctc.py` → `ctc_forward_logprob()`
+- **Pred matrix + label mapping + P(aba)** → `ctc_tasks.py` → `run_pred_example()`
+- **Pred plot with labels (log probs)** → `ctc_tasks.py` → `plot_prob_matrix()`
+- **Force alignment (max instead of sum)** → `ctc_tasks.py` → `ctc_viterbi_align()`
+- **Aligned path overlay + backtrace plot** → `ctc_tasks.py` → `plot_alignment_overlay()` and `plot_backtrace()`
+- **force_align.pkl run** → `ctc_tasks.py` → `run_force_align_pkl()`
+
 
 ## Installation & Usage
 

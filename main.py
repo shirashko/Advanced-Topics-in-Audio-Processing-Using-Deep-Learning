@@ -5,6 +5,7 @@ import numpy as np
 from preprocessing import load_and_split_dataset
 from dtw_classification import build_distance_matrix
 from ctc import ctc_forward_logprob, ctc_force_align
+from ctc_tasks import main as run_ctc_tasks
 from utils import DB_WORDS, find_optimal_threshold, classify_recordings, calculate_accuracy, get_labels_and_data, \
     analyze_samples, plot_confusion_matrix
 
@@ -13,7 +14,8 @@ CONFIG = {
     "EXPECTED_FILES": 11,
     "EXPECTED_SPEAKERS": 4,
     "MODE": "train",  # options: 'train', 'evaluation'
-    "RUN_CTC": False,
+    "RUN_CTC": True,
+    "RUN_CTC_TASKS": True,
 }
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -79,6 +81,8 @@ def run_asr_pipeline(mode: str = CONFIG["MODE"]):
 
     if CONFIG["RUN_CTC"]:
         run_ctc_demo()
+    if CONFIG["RUN_CTC_TASKS"]:
+        run_ctc_tasks()
 
 
 def _log_softmax(scores: np.ndarray, axis: int = -1) -> np.ndarray:
