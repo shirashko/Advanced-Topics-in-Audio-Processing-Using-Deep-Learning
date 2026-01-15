@@ -1,8 +1,10 @@
 import os
 import logging
-from typing import Dict
+from typing import Dict, List
+import numpy as np
 from preprocessing import load_and_split_dataset
 from dtw_classification import build_distance_matrix
+from ctc import ctc_forward_logprob, ctc_force_align
 from utils import DB_WORDS, find_optimal_threshold, classify_recordings, calculate_accuracy, get_labels_and_data, \
     analyze_samples, plot_confusion_matrix
 
@@ -11,6 +13,7 @@ CONFIG = {
     "EXPECTED_FILES": 11,
     "EXPECTED_SPEAKERS": 4,
     "MODE": "train",  # options: 'train', 'evaluation'
+    "RUN_CTC": False,
 }
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -73,6 +76,66 @@ def run_asr_pipeline(mode: str = CONFIG["MODE"]):
         print(f"Sample {i} | Target: {actual_labels[i]:<10} | Pred: {predictions[i]}")
 
     plot_confusion_matrix(actual_labels, predictions)
+
+    if CONFIG["RUN_CTC"]:
+        run_ctc_demo()
+
+
+def _log_softmax(scores: np.ndarray, axis: int = -1) -> np.ndarray:
+    max_val = np.max(scores, axis=axis, keepdims=True)
+    stabilized = scores - max_val
+    log_sum_exp = np.log(np.sum(np.exp(stabilized), axis=axis, keepdims=True))
+    return stabilized - log_sum_exp
+
+
+def _build_synthetic_ctc_log_probs(
+    target_ids: List[int],
+    num_classes: int,
+    blank_id: int = 0,
+) -> np.ndarray:
+    """
+    Build a small synthetic (T, C) log-probability matrix for CTC demo purposes.
+    """
+    pattern = [blank_id]
+    for token in target_ids:
+        pattern.extend([token, token, blank_id])
+    T = len(pattern)
+
+    scores = np.full((T, num_classes), -5.0, dtype=np.float64)
+    for t, token in enumerate(pattern):
+        scores[t, token] = 2.0
+    return _log_softmax(scores, axis=1)
+
+
+def run_ctc_demo():
+    blank_id = 0
+    label_to_id = {label: idx + 1 for idx, label in enumerate(DB_WORDS)}
+    id_to_label = {idx: label for label, idx in label_to_id.items()}
+    id_to_label[blank_id] = "<blank>"
+
+    target_labels = ["1", "2", "3"]
+    target_ids = [label_to_id[label] for label in target_labels]
+    log_probs = _build_synthetic_ctc_log_probs(
+        target_ids=target_ids,
+        num_classes=len(DB_WORDS) + 1,
+        blank_id=blank_id,
+    )
+
+    log_prob = ctc_forward_logprob(log_probs, target_ids, blank=blank_id)
+    best_path, collapsed, segments = ctc_force_align(log_probs, target_ids, blank=blank_id)
+
+    decoded_labels = [id_to_label[label_id] for label_id in collapsed]
+    alignment_segments = [
+        (id_to_label[label_id], start, end) for label_id, start, end in segments
+    ]
+
+    print("\n" + "=" * 30)
+    print("CTC DEMO RESULTS")
+    print(f"Target labels: {target_labels}")
+    print(f"CTC log-probability: {log_prob:.4f}")
+    print(f"Best-path collapsed labels: {decoded_labels}")
+    print(f"Alignment segments (label, start, end): {alignment_segments}")
+    print("=" * 30)
 
 
 if __name__ == "__main__":

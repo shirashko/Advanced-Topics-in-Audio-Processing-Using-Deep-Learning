@@ -41,6 +41,8 @@ For each audio file, we compute a Mel Spectrogram with the following parameters:
 **Forward Pass:** Calculation of the sequence probability using the forward variable .
 **Force Alignment:** Finding the most probable path and aligning the text to the audio signal.
 
+**How to run the CTC demo:** Set `RUN_CTC` to `True` in `main.py`. The demo uses a small synthetic log-probability matrix (no model required) and prints the CTC log-probability, the collapsed best path, and alignment segments.
+
 
 ## Installation & Usage
 
