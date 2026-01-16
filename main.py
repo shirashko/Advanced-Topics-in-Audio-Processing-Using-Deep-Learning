@@ -77,7 +77,9 @@ def run_asr_pipeline(mode: str = CONFIG["MODE"]):
     for i in range(min(11, len(predictions))):
         print(f"Sample {i} | Target: {actual_labels[i]:<10} | Pred: {predictions[i]}")
 
-    plot_confusion_matrix(actual_labels, predictions)
+    # Save confusion matrix
+    confusion_matrix_path = f"assets/confusion_matrix_{mode}.png"
+    plot_confusion_matrix(actual_labels, predictions, save_path=confusion_matrix_path)
 
     if CONFIG["RUN_CTC"]:
         run_ctc_demo()
