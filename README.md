@@ -8,7 +8,7 @@
 
 This project implements a basic ASR pipeline, including data loading, feature extraction using Mel Spectrograms, and sequence alignment/classification using **Dynamic Time Warping (DTW)** and **Connectionist Temporal Classification (CTC)**.
 
-You can meantime find the drive link of the theoretical part of the assignment [in here](https://docs.google.com/document/d/19fcfkTumvDoBQVct8EGvNoBGZGCHtH-_ZDBjuqMfEvk/edit?usp=sharing)
+You can find the drive link of the theoretical part of the assignment [here](https://docs.google.com/document/d/19fcfkTumvDoBQVct8EGvNoBGZGCHtH-_ZDBjuqMfEvk/edit?usp=sharing)
 
 
 ## 1. Dataset & Preprocessing
@@ -36,32 +36,103 @@ For each audio file, we compute a Mel Spectrogram with the following parameters:
 
 ![](assets/dtw_visual.png)
 
-## 4. CTC Algorithm (Forward & Force Alignment)
-* Implementation of the CTC collapse function .
-**Forward Pass:** Calculation of the sequence probability using the forward variable .
-**Force Alignment:** Finding the most probable path and aligning the text to the audio signal.
+---
 
-**How to run the CTC demo:** Set `RUN_CTC` to `True` in `main.py`. The demo uses a small synthetic log-probability matrix (no model required) and prints the CTC log-probability, the collapsed best path, and alignment segments.
+## 4. CTC Algorithm - Forward and Force Alignment
 
-**CTC Tasks (Parts 4–7):** Run `python ctc_tasks.py` after placing `force_align.pkl` in the repo root. This script computes the `P(aba)` forward probability for the provided `pred` matrix, runs forced alignment (max instead of sum), and saves all required plots to `assets/`:
-- `ctc_pred_matrix.png`
-- `ctc_aba_alignment.png`
-- `ctc_aba_backtrace.png`
-- `ctc_force_align_overlay.png`
-- `ctc_force_align_backtrace.png`
+### Q4: CTC Collapse Function B
 
-**How the assignment items map to the code:**
-- **CTC collapse (B)** → `ctc.py` → `ctc_collapse()`
-- **Forward pass (α)** → `ctc.py` → `ctc_forward_logprob()`
-- **Pred matrix + label mapping + P(aba)** → `ctc_tasks.py` → `run_pred_example()`
-- **Pred plot with labels (log probs)** → `ctc_tasks.py` → `plot_prob_matrix()`
-- **Force alignment (max instead of sum)** → `ctc_tasks.py` → `ctc_viterbi_align()`
-- **Aligned path overlay + backtrace plot** → `ctc_tasks.py` → `plot_alignment_overlay()` and `plot_backtrace()`
-- **force_align.pkl run** → `ctc_tasks.py` → `run_force_align_pkl()`
+- Implemented in `ctc.py`: `ctc_collapse()`.
+- Removes consecutive repeats and blanks.
+- Example: `[^, a, a, b, ^, a] -> [a, b, a]` and `[a, b, b, a, ^] -> [a, b, a]`.
 
+### Q5: CTC Forward Pass (alpha)
+
+- Implemented in `ctc.py`: `ctc_forward_logprob()`.
+- Computes the total probability of a target sequence by summing over all valid CTC paths using log probabilities.
+
+### Q5a-d: Probability Matrix and P(aba)
+
+- Label mapping: `{0: 'a', 1: 'b', 2: '^'}` where `^` is blank.
+- Probability of sequence `aba`:
+  - `P(aba) = 0.088800`
+  - `log P(aba) = -2.421369`
+- Pred matrix plot (log probabilities):
+
+![CTC Pred Matrix](assets/ctc_pred_matrix.png)
+
+---
+
+## 6. CTC Force Alignment (Viterbi)
+
+### Q6a: Adaptation for Force Alignment
+
+- Replace the sum operator with max (Viterbi).
+- Implemented in `ctc_tasks.py`: `ctc_viterbi_align()`.
+
+### Q6b: Most Probable Path for `aba`
+
+- Best path (before collapse): `abba^`
+- Collapsed labels: `aba`
+- Sequence labels: `a b b a ^`
+
+### Q6c: Probability of the Best Path
+
+- `P(best path) = 0.040320`
+- `log P(best path) = -3.210908`
+
+### Q6d-e: Plots
+
+![CTC Alignment Overlay (aba)](assets/ctc_aba_alignment.png)
+
+![CTC Backtrace Matrix (aba)](assets/ctc_aba_backtrace.png)
+
+---
+
+## 7. Force Alignment on force_align.pkl
+
+### Q7a: Loaded File Contents
+
+- Audio sampled at 16 kHz.
+- Label mapping between indices and characters (alphabet + blank).
+- `acoustic_model_out_probs` is a probability matrix of shape `T x 29`.
+- `gt_text` and `text_to_align`.
+
+### Q7b-d: Results for force_align.pkl
+
+- Text to align: `then goodbye said rats they want home`
+- Best path labels (pre-collapse):
+```
+^^^^^^^the^nn^  ^g^o^od^^^^by^e^^^^               ^s^aid      rratt^^s^^^^^                           they      ^w^anntt^^^^^^^  ^hom^e^^^^^^^^^^^^^^^^^^^^^^^
+```
+- Collapsed labels: `then goodbye said rats they want home`
+- Best path probability:
+  - `P(best path) ~= 0`
+  - `log P(best path) = -68.670566`
+
+### Q7e: Plots
+
+![CTC Force Align Overlay](assets/ctc_force_align_overlay.png)
+
+![CTC Force Align Backtrace](assets/ctc_force_align_backtrace.png)
+
+---
+
+## Summary of Results
+
+| Metric | Value |
+|--------|-------|
+| P(aba) - Forward Algorithm | 0.088800 (log: -2.421369) |
+| P(aba) - Best Path (Viterbi) | 0.040320 (log: -3.210908) |
+| Best Path for `aba` | `abba^` -> collapsed: `aba` |
+| Force Align (pkl) Best Path Prob | ~0 (log: -68.670566) |
+| Force Align (pkl) Collapsed | `then goodbye said rats they want home` |
+
+---
 
 ## Installation & Usage
 
 1. Clone the repository: `git clone git@github.com:shirashko/Advanced-Topics-in-Audio-Processing-Using-Deep-Learning.git`
 2. Install dependencies: `pip install -r requirements.txt`
 3. Run the main script: `python main.py`
+4. Run CTC tasks only: `python ctc_tasks.py`
