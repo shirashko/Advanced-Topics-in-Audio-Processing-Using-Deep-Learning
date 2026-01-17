@@ -2,13 +2,13 @@
 
 **Course:** Advanced Topics in Audio Processing using Deep Learning 
 
+Gal Getz (208605154), Shir Rashkovitz (209144013), Shoham Mazuz (322299496), Omer Ventura (207043860)
+
 **Environment:** Python 3.10
 
 ## Project Overview
 
 This project implements a basic ASR pipeline, including data loading, feature extraction using Mel Spectrograms, and sequence alignment/classification using **Dynamic Time Warping (DTW)** and **Connectionist Temporal Classification (CTC)**.
-
-You can find the drive link of the theoretical part of the assignment [here](https://docs.google.com/document/d/19fcfkTumvDoBQVct8EGvNoBGZGCHtH-_ZDBjuqMfEvk/edit?usp=sharing)
 
 
 ## 1. Dataset & Preprocessing
