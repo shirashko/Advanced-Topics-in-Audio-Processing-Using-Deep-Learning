@@ -58,13 +58,17 @@ def run_asr_pipeline(mode: str = CONFIG["MODE"]):
 
     analyze_samples(dataset)
 
+    # IMPORTANT (Assignment 2, DTW §3.e–f): compute the threshold ONLY from training
+    # data, and then apply that threshold to both training and evaluation sets.
+    logging.info("Calculating DTW Distance Matrix (Training, for threshold)...")
+    train_dist_matrix = build_distance_matrix(dataset["train"], dataset["representative"], DB_WORDS)
+    train_labels = get_labels_and_data(dataset, "train")
+    optimal_threshold = find_optimal_threshold(train_dist_matrix, train_labels)
+    logging.info(f"Optimal threshold determined from TRAIN: {optimal_threshold:.4f}")
+
     logging.info(f"Calculating DTW Distance Matrix (Mode: {mode})...")
-    dist_matrix = build_distance_matrix(dataset[mode], dataset['representative'], DB_WORDS)
-
+    dist_matrix = build_distance_matrix(dataset[mode], dataset["representative"], DB_WORDS)
     actual_labels = get_labels_and_data(dataset, mode)
-
-    optimal_threshold = find_optimal_threshold(dist_matrix, actual_labels)
-    logging.info(f"Optimal threshold determined: {optimal_threshold:.4f}")
 
     predictions = classify_recordings(dist_matrix, optimal_threshold)
     accuracy = calculate_accuracy(predictions, actual_labels)
