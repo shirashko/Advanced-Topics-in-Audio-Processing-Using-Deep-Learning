@@ -61,7 +61,9 @@ def build_distance_matrix(test_data, db_data, db_keys):
     Constructs the 40x11 distance matrix required for the project (Section 3.d).
     Compares every recording in the test set against the reference DB.
     """
-    speakers = list(test_data.keys())
+    # IMPORTANT: keep speaker iteration deterministic and consistent with
+    # utils.get_labels_and_data(), which uses sorted speaker keys.
+    speakers = sorted(test_data.keys())
 
     # Calculate total number of test files across all speakers
     num_test_files = sum(len(test_data[spk]) for spk in speakers)

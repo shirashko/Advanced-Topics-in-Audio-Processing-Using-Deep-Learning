@@ -248,9 +248,13 @@ def plot_confusion_matrix(actual_labels, predicted_labels, save_path=None):
     Computes and plots a confusion matrix to evaluate classification
     accuracy (over the train/validation set).
     """
-    cm = confusion_matrix(actual_labels, predicted_labels, labels=DB_WORDS)
+    # If predicted labels include values outside DB_WORDS (e.g. "banana / non digit"),
+    # include them so they aren't silently dropped from the plot.
+    extra_labels = sorted(set(predicted_labels) - set(DB_WORDS))
+    labels = DB_WORDS + extra_labels
+    cm = confusion_matrix(actual_labels, predicted_labels, labels=labels)
     fig, ax = plt.subplots(figsize=(12, 10))
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=DB_WORDS)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
     disp.plot(cmap='Blues', ax=ax, xticks_rotation='vertical', values_format='d')
     cbar = ax.images[-1].colorbar
     max_val = cm.max()

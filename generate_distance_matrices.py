@@ -15,7 +15,8 @@ import os
 
 def build_distance_matrix_no_normalization(test_data, db_data, db_keys):
     """Build distance matrix without length normalization (for comparison)"""
-    speakers = list(test_data.keys())
+    # Keep ordering deterministic (must match label extraction logic).
+    speakers = sorted(test_data.keys())
     num_test_files = sum(len(test_data[spk]) for spk in speakers)
     dist_matrix = np.zeros((num_test_files, len(db_keys)))
     

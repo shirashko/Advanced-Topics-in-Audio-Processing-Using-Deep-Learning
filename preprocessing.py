@@ -45,8 +45,8 @@ def load_and_split_dataset(data_path):
         "evaluation": {}  # {speaker_id: {word: spectrogram}}
     }
 
-    # Iterate through the data folder
-    for filename in os.listdir(data_path):
+    # Iterate through the data folder (sorted for deterministic dataset construction)
+    for filename in sorted(os.listdir(data_path)):
         if filename.endswith(AUDIO_FILE_FORMAT):
             # Parsing format: [Group]_[SpeakerID]_[Gender]_[Word].wav
             # Example: rep_spk1_f_0.wav -> ['rep', 'spk1', 'f', '0']
@@ -60,7 +60,8 @@ def load_and_split_dataset(data_path):
             file_path = os.path.join(data_path, filename)
             spectrogram = extract_features(file_path)
 
-            group_to_key = {"train": "train", "eval": "evaluation"}
+            # Accept a couple of common aliases for the evaluation split.
+            group_to_key = {"train": "train", "eval": "evaluation", "evaluation": "evaluation", "val": "evaluation"}
             if group == "rep":
                 dataset["representative"][word] = spectrogram
             elif group in group_to_key:
