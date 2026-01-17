@@ -56,7 +56,7 @@ def compute_dtw_distance(spectrogram1, spectrogram2, normalize=True):
     return total_cost / (num_frames_ref + num_frames_test) if normalize else total_cost
 
 
-def build_distance_matrix(test_data, db_data, db_keys):
+def build_distance_matrix(test_data, db_data, db_keys, *, normalize_dtw: bool = True):
     """
     Constructs the 40x11 distance matrix required for the project (Section 3.d).
     Compares every recording in the test set against the reference DB.
@@ -76,7 +76,9 @@ def build_distance_matrix(test_data, db_data, db_keys):
             # Compare current file to every entry in the reference DB
             for col_idx, db_word in enumerate(db_keys):
                 reference_spectrogram = db_data[db_word]
-                dist_matrix[row_idx, col_idx] = compute_dtw_distance(reference_spectrogram, test_spectrogram)
+                dist_matrix[row_idx, col_idx] = compute_dtw_distance(
+                    reference_spectrogram, test_spectrogram, normalize=normalize_dtw
+                )
             row_idx += 1
 
     return dist_matrix

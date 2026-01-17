@@ -74,7 +74,7 @@ def main():
     # Build distance matrix (original order: speaker first, then word)
     print("\n1. Computing original distance matrix (with normalization)...")
     dist_matrix_original = build_distance_matrix(
-        dataset['train'], dataset['representative'], DB_WORDS
+        dataset['train'], dataset['representative'], DB_WORDS, normalize_dtw=True
     )
     print(f"   Shape: {dist_matrix_original.shape}")
     

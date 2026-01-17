@@ -18,11 +18,11 @@ N_FFT = int(WINDOW_SIZE_MS * SAMPLE_RATE_HZ / 1000)
 # The number of samples between successive frames
 HOP_LENGTH = int(HOP_SIZE_MS * SAMPLE_RATE_HZ / 1000)
 
-def extract_features(file_path, normalize=True):
+def extract_features(file_path, normalize=True, audio_normalize: bool = True):
     """Calculates Mel Spectrogram for one file."""
     audio_signal, sampling_rate_hz = librosa.load(file_path, sr=SAMPLE_RATE_HZ)
 
-    if np.max(np.abs(audio_signal)) != 0:
+    if audio_normalize and np.max(np.abs(audio_signal)) != 0:
         audio_signal = audio_signal / np.max(np.abs(audio_signal))
 
     mel_spec = feature.melspectrogram(
@@ -38,7 +38,7 @@ def extract_features(file_path, normalize=True):
     return normalized_mel if normalize else log_mel
 
 
-def load_and_split_dataset(data_path):
+def load_and_split_dataset(data_path, *, audio_normalize: bool = True):
     dataset = {
         "representative": {},  # {word: spectrogram}
         "train": {},  # {speaker_id: {word: spectrogram}}
@@ -58,7 +58,7 @@ def load_and_split_dataset(data_path):
             group, spk_id, gender, word = parts
 
             file_path = os.path.join(data_path, filename)
-            spectrogram = extract_features(file_path)
+            spectrogram = extract_features(file_path, audio_normalize=audio_normalize)
 
             # Accept a couple of common aliases for the evaluation split.
             group_to_key = {"train": "train", "eval": "evaluation", "evaluation": "evaluation", "val": "evaluation"}

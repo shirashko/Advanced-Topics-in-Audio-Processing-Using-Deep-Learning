@@ -1,0 +1,7 @@
+{
+  "config": "improvement_1_audio_norm",
+  "mode": "evaluation",
+  "threshold_from_train": 1475.3337999037126,
+  "accuracy_percent": 22.727272727272727,
+  "num_samples": 44
+}

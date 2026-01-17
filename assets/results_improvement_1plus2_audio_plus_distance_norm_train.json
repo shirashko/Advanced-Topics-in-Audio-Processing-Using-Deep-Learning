@@ -1,0 +1,7 @@
+{
+  "config": "improvement_1plus2_audio_plus_distance_norm",
+  "mode": "train",
+  "threshold_from_train": 4.611469656863351,
+  "accuracy_percent": 38.63636363636363,
+  "num_samples": 44
+}

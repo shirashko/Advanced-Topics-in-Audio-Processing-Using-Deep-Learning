@@ -1,0 +1,7 @@
+{
+  "config": "baseline",
+  "mode": "evaluation",
+  "threshold_from_train": 1475.3338271523965,
+  "accuracy_percent": 22.727272727272727,
+  "num_samples": 44
+}

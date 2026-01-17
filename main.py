@@ -1,5 +1,6 @@
 import os
 import logging
+import json
 from typing import Dict, List
 import numpy as np
 from preprocessing import load_and_split_dataset
@@ -13,7 +14,8 @@ CONFIG = {
     "DATA_DIR": "data",
     "EXPECTED_FILES": 11,
     "EXPECTED_SPEAKERS": 4,
-    "MODE": "train",  # options: 'train', 'evaluation'
+    "MODE": "all",  # options: 'train', 'evaluation', 'all'
+    "RUN_IMPROVEMENTS": True,  # runs baseline + improvements (Q3.g) and saves separate confusion matrices
     "RUN_CTC": True,
     "RUN_CTC_TASKS": True,
 }
@@ -46,44 +48,128 @@ def validate_dataset(dataset: Dict) -> bool:
     return True
 
 
-def run_asr_pipeline(mode: str = CONFIG["MODE"]):
-    data_path = os.path.join(os.getcwd(), CONFIG["DATA_DIR"])
+def _ensure_assets_dir() -> str:
+    assets_dir = os.path.join(os.getcwd(), "assets")
+    os.makedirs(assets_dir, exist_ok=True)
+    return assets_dir
 
-    logging.info(f"Loading data from: {data_path}")
-    dataset = load_and_split_dataset(data_path)
 
-    if not validate_dataset(dataset):
-        logging.error("Dataset validation failed. Check your data directory.")
-        raise (ValueError("Dataset validation failed. Check your data directory."))
-
-    analyze_samples(dataset)
-
-    # IMPORTANT (Assignment 2, DTW §3.e–f): compute the threshold ONLY from training
-    # data, and then apply that threshold to both training and evaluation sets.
-    logging.info("Calculating DTW Distance Matrix (Training, for threshold)...")
-    train_dist_matrix = build_distance_matrix(dataset["train"], dataset["representative"], DB_WORDS)
-    train_labels = get_labels_and_data(dataset, "train")
-    optimal_threshold = find_optimal_threshold(train_dist_matrix, train_labels)
-    logging.info(f"Optimal threshold determined from TRAIN: {optimal_threshold:.4f}")
-
+def _evaluate_mode(
+    dataset: Dict,
+    mode: str,
+    optimal_threshold: float,
+    *,
+    config_name: str,
+    normalize_dtw: bool,
+) -> Dict:
     logging.info(f"Calculating DTW Distance Matrix (Mode: {mode})...")
-    dist_matrix = build_distance_matrix(dataset[mode], dataset["representative"], DB_WORDS)
+    dist_matrix = build_distance_matrix(
+        dataset[mode], dataset["representative"], DB_WORDS, normalize_dtw=normalize_dtw
+    )
     actual_labels = get_labels_and_data(dataset, mode)
 
     predictions = classify_recordings(dist_matrix, optimal_threshold)
     accuracy = calculate_accuracy(predictions, actual_labels)
 
     print("\n" + "=" * 30)
-    print(f"RESULTS FOR MODE: {mode.upper()}")
+    print(f"RESULTS FOR MODE: {mode.upper()} | CONFIG: {config_name}")
+    print(f"Threshold (from TRAIN): {optimal_threshold:.4f}")
     print(f"Accuracy: {accuracy:.2f}%")
     print("=" * 30)
 
     for i in range(min(11, len(predictions))):
         print(f"Sample {i} | Target: {actual_labels[i]:<10} | Pred: {predictions[i]}")
 
+    assets_dir = _ensure_assets_dir()
+
     # Save confusion matrix
-    confusion_matrix_path = f"assets/confusion_matrix_{mode}.png"
+    confusion_matrix_path = os.path.join(assets_dir, f"confusion_matrix_{config_name}_{mode}.png")
     plot_confusion_matrix(actual_labels, predictions, save_path=confusion_matrix_path)
+
+    # Also write legacy/short filenames for the "final" config so there's no ambiguity
+    # about what confusion_matrix_{mode}.png refers to.
+    if config_name in ("final", "improvement_1plus2_audio_plus_distance_norm"):
+        legacy_confusion_matrix_path = os.path.join(assets_dir, f"confusion_matrix_{mode}.png")
+        plot_confusion_matrix(actual_labels, predictions, save_path=legacy_confusion_matrix_path)
+
+    # Save a small machine-readable results file
+    results = {
+        "config": config_name,
+        "mode": mode,
+        "threshold_from_train": float(optimal_threshold),
+        "accuracy_percent": float(accuracy),
+        "num_samples": int(len(actual_labels)),
+    }
+    with open(os.path.join(assets_dir, f"results_{config_name}_{mode}.json"), "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2)
+
+    return results
+
+
+def run_asr_pipeline(mode: str = CONFIG["MODE"]):
+    data_path = os.path.join(os.getcwd(), CONFIG["DATA_DIR"])
+
+    logging.info(f"Loading data from: {data_path}")
+    assets_dir = _ensure_assets_dir()
+
+    modes = ["train", "evaluation"] if mode == "all" else [mode]
+
+    if CONFIG["RUN_IMPROVEMENTS"]:
+        # Q3.g configs: baseline, improvement 1 (audio norm), improvement 1+2 (audio+distance norm)
+        configs = [
+            ("baseline", dict(audio_normalize=False, normalize_dtw=False)),
+            ("improvement_1_audio_norm", dict(audio_normalize=True, normalize_dtw=False)),
+            ("improvement_1plus2_audio_plus_distance_norm", dict(audio_normalize=True, normalize_dtw=True)),
+        ]
+    else:
+        # Single "final" config (current best): audio + distance normalization.
+        configs = [
+            ("final", dict(audio_normalize=True, normalize_dtw=True)),
+        ]
+
+    summary = []
+
+    for config_name, cfg in configs:
+        logging.info(f"\n=== Running config: {config_name} ===")
+        dataset = load_and_split_dataset(data_path, audio_normalize=cfg["audio_normalize"])
+
+        if not validate_dataset(dataset):
+            logging.error("Dataset validation failed. Check your data directory.")
+            raise ValueError("Dataset validation failed. Check your data directory.")
+
+        # Keep qualitative plots (Q2.d) generated once to avoid overwriting / duplication.
+        if config_name == configs[0][0]:
+            analyze_samples(dataset)
+
+        # IMPORTANT (Assignment 2, DTW §3.e–f): compute the threshold ONLY from training
+        # data, and then apply that threshold to both training and evaluation sets.
+        logging.info("Calculating DTW Distance Matrix (Training, for threshold)...")
+        train_dist_matrix = build_distance_matrix(
+            dataset["train"],
+            dataset["representative"],
+            DB_WORDS,
+            normalize_dtw=cfg["normalize_dtw"],
+        )
+        train_labels = get_labels_and_data(dataset, "train")
+        optimal_threshold = find_optimal_threshold(train_dist_matrix, train_labels)
+        logging.info(f"Optimal threshold determined from TRAIN: {optimal_threshold:.4f}")
+
+        for m in modes:
+            if m not in dataset:
+                raise ValueError(f"Unknown mode '{m}'. Expected one of: train, evaluation, all.")
+            summary.append(
+                _evaluate_mode(
+                    dataset,
+                    m,
+                    optimal_threshold,
+                    config_name=config_name,
+                    normalize_dtw=cfg["normalize_dtw"],
+                )
+            )
+
+    # Save combined summary
+    with open(os.path.join(assets_dir, "results_summary.json"), "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
 
     if CONFIG["RUN_CTC"]:
         run_ctc_demo()

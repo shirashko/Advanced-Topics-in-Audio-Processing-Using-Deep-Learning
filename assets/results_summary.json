@@ -1,0 +1,44 @@
+[
+  {
+    "config": "baseline",
+    "mode": "train",
+    "threshold_from_train": 1475.3338271523965,
+    "accuracy_percent": 36.36363636363637,
+    "num_samples": 44
+  },
+  {
+    "config": "baseline",
+    "mode": "evaluation",
+    "threshold_from_train": 1475.3338271523965,
+    "accuracy_percent": 22.727272727272727,
+    "num_samples": 44
+  },
+  {
+    "config": "improvement_1_audio_norm",
+    "mode": "train",
+    "threshold_from_train": 1475.3337999037126,
+    "accuracy_percent": 36.36363636363637,
+    "num_samples": 44
+  },
+  {
+    "config": "improvement_1_audio_norm",
+    "mode": "evaluation",
+    "threshold_from_train": 1475.3337999037126,
+    "accuracy_percent": 22.727272727272727,
+    "num_samples": 44
+  },
+  {
+    "config": "improvement_1plus2_audio_plus_distance_norm",
+    "mode": "train",
+    "threshold_from_train": 4.611469656863351,
+    "accuracy_percent": 38.63636363636363,
+    "num_samples": 44
+  },
+  {
+    "config": "improvement_1plus2_audio_plus_distance_norm",
+    "mode": "evaluation",
+    "threshold_from_train": 4.611469656863351,
+    "accuracy_percent": 27.27272727272727,
+    "num_samples": 44
+  }
+]
